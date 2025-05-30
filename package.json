@@ -1,0 +1,39 @@
+{
+  "name": "ai-helpdesk-portal",
+  "version": "1.0.0",
+  "description": "AI-First Internal Helpdesk Portal with React frontend and Node backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "start:frontend": "cd frontend && npm run dev",
+    "start:backend": "cd backend && npm run start",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "build": "cd frontend && npm run build",
+    "seed": "cd backend && npm run seed",
+    "test:backend": "cd backend && npm test",
+    "admin": "cd backend && npm run admin"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akhilbawari/ai-helpdesk-portal.git"
+  },
+  "keywords": [
+    "ai",
+    "helpdesk",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true
+}
