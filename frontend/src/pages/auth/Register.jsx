@@ -63,36 +63,36 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-beige-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <svg className="w-12 h-12 text-beige-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-12 h-12 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M19.7274 20.4471C19.2716 19.1713 18.2672 18.0439 16.8701 17.2399C15.4729 16.4358 13.7611 16 12 16C10.2389 16 8.52706 16.4358 7.12991 17.2399C5.73276 18.0439 4.72839 19.1713 4.27259 20.4471" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-display font-bold text-navy-900">
+        <h2 className="mt-6 text-center text-3xl font-bold text-white">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-sm text-navy-600">
+        <p className="mt-2 text-center text-sm text-gray-200">
           Or{' '}
-          <Link to="/login" className="font-medium text-beige-600 hover:text-beige-700">
+          <Link to="/login" className="font-medium text-white hover:text-gray-200 underline">
             sign in to your existing account
           </Link>
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-soft sm:rounded-lg sm:px-10 border border-beige-100">
+        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-xl sm:px-10 border border-gray-100">
           {error && (
-            <div className="mb-4 bg-coral-50 border-l-4 border-coral-500 p-4 text-coral-700">
+            <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4 text-red-700 rounded-md">
               <p>{error}</p>
             </div>
           )}
           
           <form className="space-y-6" onSubmit={handleRegister}>
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-navy-700">
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
                 Full Name
               </label>
               <div className="mt-1">
@@ -104,13 +104,13 @@ export default function Register() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-beige-300 rounded-md shadow-sm placeholder-beige-400 focus:outline-none focus:ring-beige-500 focus:border-beige-500"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-navy-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
               </label>
               <div className="mt-1">
@@ -122,13 +122,13 @@ export default function Register() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-beige-300 rounded-md shadow-sm placeholder-beige-400 focus:outline-none focus:ring-beige-500 focus:border-beige-500"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-navy-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </label>
               <div className="mt-1">
@@ -140,16 +140,16 @@ export default function Register() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-beige-300 rounded-md shadow-sm placeholder-beige-400 focus:outline-none focus:ring-beige-500 focus:border-beige-500"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 />
               </div>
-              <p className="mt-1 text-xs text-navy-500">
+              <p className="mt-1 text-xs text-gray-500">
                 Password must be at least 8 characters long
               </p>
             </div>
 
             <div>
-              <label htmlFor="department" className="block text-sm font-medium text-navy-700">
+              <label htmlFor="department" className="block text-sm font-medium text-gray-700">
                 Department
               </label>
               <div className="mt-1">
@@ -159,7 +159,7 @@ export default function Register() {
                   required
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-beige-300 rounded-md shadow-sm placeholder-beige-400 focus:outline-none focus:ring-beige-500 focus:border-beige-500"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 >
                   <option value="">Select a department</option>
                   {departments.map((dept) => (
@@ -177,15 +177,15 @@ export default function Register() {
                 name="terms"
                 type="checkbox"
                 required
-                className="h-4 w-4 text-beige-600 focus:ring-beige-500 border-beige-300 rounded"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded transition-all duration-200"
               />
-              <label htmlFor="terms" className="ml-2 block text-sm text-navy-700">
+              <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
                 I agree to the{' '}
-                <Link to="/terms" className="font-medium text-beige-600 hover:text-beige-700">
+                <Link to="/terms" className="font-medium text-indigo-600 hover:text-purple-600 transition-colors duration-200">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link to="/privacy" className="font-medium text-beige-600 hover:text-beige-700">
+                <Link to="/privacy" className="font-medium text-indigo-600 hover:text-purple-600 transition-colors duration-200">
                   Privacy Policy
                 </Link>
               </label>
@@ -195,7 +195,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-beige-600 hover:bg-beige-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-beige-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {loading ? 'Creating account...' : 'Create account'}
               </button>
@@ -205,10 +205,10 @@ export default function Register() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-beige-200" />
+                <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-navy-600">Or continue with</span>
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
               </div>
             </div>
 
@@ -218,15 +218,21 @@ export default function Register() {
                 onClick={() => {
                   setLoading(true);
                   setError(null);
-                  import('../../services/authService').then(({ default: authService }) => {
-                    authService.loginWithGoogle();
-                  }).catch(err => {
+                  try {
+                    // Using centralized apiService for Google login
+                    import('../../services').then(({ apiService }) => {
+                      apiService.loginWithGoogle();
+                    }).catch(err => {
+                      setError('Failed to initialize Google login');
+                      setLoading(false);
+                    });
+                  } catch (error) {
                     setError('Failed to initialize Google login');
                     setLoading(false);
-                  });
+                  }
                 }}
                 disabled={loading}
-                className="w-full md:w-2/3 inline-flex justify-center py-2 px-4 border border-beige-300 rounded-md shadow-sm bg-white text-sm font-medium text-navy-700 hover:bg-beige-50 disabled:opacity-50"
+                className="w-full md:w-2/3 inline-flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50 transition-all duration-200"
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

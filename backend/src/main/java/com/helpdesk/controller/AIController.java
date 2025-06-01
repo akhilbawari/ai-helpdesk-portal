@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -56,10 +57,32 @@ public class AIController {
             @RequestBody Map<String, Object> request) {
         
         @SuppressWarnings("unchecked")
-        List<String> recentTickets = (List<String>) request.get("recentTickets");
+        List<Object> ticketObjects = (List<Object>) request.get("recentTickets");
         
-        log.info("AI detecting patterns in {} recent tickets", recentTickets.size());
-        Map<String, Object> patterns = aiService.detectPatterns(recentTickets);
+        List<String> ticketDescriptions = new ArrayList<>();
+        
+        if (ticketObjects != null) {
+            for (Object ticketObj : ticketObjects) {
+                if (ticketObj instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> ticket = (Map<String, Object>) ticketObj;
+                    
+                    // Extract title and description
+                    String title = ticket.containsKey("title") ? String.valueOf(ticket.get("title")) : "";
+                    String description = ticket.containsKey("description") ? String.valueOf(ticket.get("description")) : "";
+                    
+                    // Combine title and description for pattern analysis
+                    String ticketText = title + ": " + description;
+                    ticketDescriptions.add(ticketText);
+                } else if (ticketObj instanceof String) {
+                    // Handle case where it's already a string
+                    ticketDescriptions.add((String) ticketObj);
+                }
+            }
+        }
+
+        log.info("AI detecting patterns in {} recent tickets", ticketDescriptions.size());
+        Map<String, Object> patterns = aiService.detectPatterns(ticketDescriptions);
         
         return ResponseEntity.ok(ApiResponse.success(patterns, "Ticket patterns detected"));
     }

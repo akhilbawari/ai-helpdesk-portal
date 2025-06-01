@@ -36,13 +36,18 @@ public class UserDetailsImpl implements UserDetails {
     
     @Override
     public String getUsername() {
-        // Use email as username for Spring Security
-        return email;
+        // Use ID as username/principal for Spring Security
+        return id;
     }
     
     // Additional method to get the user's ID
     public String getId() {
         return id;
+    }
+    
+    // Additional method to get the user's email
+    public String getEmail() {
+        return email;
     }
     
     // Method to get the user's profile

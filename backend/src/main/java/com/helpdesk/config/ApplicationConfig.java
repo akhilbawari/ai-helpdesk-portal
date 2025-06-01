@@ -39,7 +39,7 @@ public class ApplicationConfig {
     }
     
     @Bean
-    public RestTemplate restTemplate() {
+    public RestTemplate defaultRestTemplate() {
         return new RestTemplate();
     }
 }

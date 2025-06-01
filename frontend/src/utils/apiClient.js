@@ -10,6 +10,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Don't use withCredentials with wildcard CORS policy
 });
 
 // Add a request interceptor to include auth token in requests

@@ -3,6 +3,7 @@ package com.helpdesk.controller;
 import com.helpdesk.dto.ApiResponse;
 import com.helpdesk.model.Profile;
 import com.helpdesk.model.Ticket;
+import com.helpdesk.repository.ProfileRepository;
 import com.helpdesk.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/tickets")
@@ -21,6 +23,7 @@ import java.util.List;
 public class TicketController {
     
     private final TicketService ticketService;
+    private final ProfileRepository profileRepository;
     
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPPORT')")
@@ -90,12 +93,18 @@ public class TicketController {
     
     @PostMapping
     public ResponseEntity<ApiResponse<Ticket>> createTicket(@RequestBody Ticket ticket, Authentication authentication) {
-        // Set the creator to the authenticated user
+        // Get the authenticated user ID
         String userId = authentication.getName();
         log.info("Creating ticket for user: {}", userId);
         
-        Profile creator = new Profile();
-        creator.setId(userId);
+        // Fetch the existing profile from the repository
+        Profile creator = profileRepository.findById(userId)
+            .orElseThrow(() -> {
+                log.error("User profile not found for ID: {}", userId);
+                return new NoSuchElementException("User profile not found for ID: " + userId);
+            });
+        
+        log.info("Found existing profile for user: {} with email: {}", userId, creator.getEmail());
         ticket.setCreatedBy(creator);
         
         Ticket createdTicket = ticketService.createTicket(ticket);

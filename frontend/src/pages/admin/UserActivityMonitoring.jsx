@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
-import adminService from '../../services/adminService';
-import profileService from '../../services/profileService';
+import { apiService } from '../../services';
 
 export default function UserActivityMonitoring() {
   const { user } = useAuth();
@@ -29,17 +28,25 @@ export default function UserActivityMonitoring() {
   const fetchActivities = async () => {
     try {
       setLoading(true);
-      let response;
+      let data, error;
       
       if (userId) {
         // Fetch activities for specific user
-        response = await adminService.getUserActivities(userId);
+        ({ data, error } = await apiService.getUserActivities(userId));
       } else {
         // Fetch all activities
-        response = await adminService.getAllUserActivities();
+        ({ data, error } = await apiService.getAllUserActivities());
       }
       
-      setActivities(response.data || []);
+      if (error) {
+        if (error.status === 403) {
+          toast.error('You do not have permission to view user activities');
+        } else {
+          throw new Error(error.message || 'Failed to load user activities');
+        }
+      } else {
+        setActivities(data || []);
+      }
     } catch (error) {
       console.error('Error fetching user activities:', error);
       toast.error('Failed to load user activities');
@@ -50,11 +57,19 @@ export default function UserActivityMonitoring() {
 
   const fetchUserProfile = async (id) => {
     try {
-      const { data, error } = await profileService.getProfileById(id);
-      if (error) throw error;
-      setUserProfile(data);
+      const { data, error } = await apiService.getUserProfile(id);
+      if (error) {
+        if (error.status === 403) {
+          toast.error('You do not have permission to view this user profile');
+        } else {
+          throw new Error(error.message || 'Failed to load user profile');
+        }
+      } else {
+        setUserProfile(data);
+      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      toast.error('Failed to load user profile');
     }
   };
 
@@ -81,8 +96,17 @@ export default function UserActivityMonitoring() {
       if (filters.dateFrom) params.append('from', filters.dateFrom);
       if (filters.dateTo) params.append('to', filters.dateTo);
       
-      const response = await adminService.getUserActivitiesWithFilters(params.toString());
-      setActivities(response.data || []);
+      const { data, error } = await apiService.getUserActivitiesWithFilters(params.toString());
+      
+      if (error) {
+        if (error.status === 403) {
+          toast.error('You do not have permission to view user activities');
+        } else {
+          throw new Error(error.message || 'Failed to apply filters');
+        }
+      } else {
+        setActivities(data || []);
+      }
     } catch (error) {
       console.error('Error fetching filtered user activities:', error);
       toast.error('Failed to apply filters');

@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             final String authHeader = request.getHeader("Authorization");
             final String jwt;
-            final String userEmail;
+            final String userId;
             
             // Skip token validation for paths that don't require authentication
             String requestPath = request.getServletPath();
@@ -59,7 +59,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Extract and validate the JWT token
             jwt = authHeader.substring(7);
             try {
-                userEmail = jwtService.extractUsername(jwt);
+                // Now extractUsername actually returns the user ID
+                userId = jwtService.extractUsername(jwt);
             } catch (ExpiredJwtException e) {
                 logger.error("JWT token has expired: {}", e.getMessage());
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -88,8 +89,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             
             // If we have a valid token and no authentication is set yet
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                var userProfile = this.profileRepository.findByEmail(userEmail).orElse(null);
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                var userProfile = this.profileRepository.findById(userId).orElse(null);
                 
                 if (userProfile != null) {
                     UserDetails userDetails = new UserDetailsImpl(userProfile);
@@ -107,12 +108,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         
                         // Set the authentication in the security context
                         SecurityContextHolder.getContext().setAuthentication(authToken);
-                        logger.debug("User authenticated successfully: {}", userEmail);
+                        logger.debug("User authenticated successfully: {}", userId);
                     } else {
-                        logger.warn("Invalid JWT token for user: {}", userEmail);
+                        logger.info("JWT token is valid for user: {}", userId);
                     }
                 } else {
-                    logger.warn("User not found for email: {}", userEmail);
+                    logger.warn("User not found for ID: {}", userId);
                 }
             }
             

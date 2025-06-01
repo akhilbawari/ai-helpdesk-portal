@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { authService, profileService } from '../services';
+import { apiService } from '../services';
 
 // Create context with default values to prevent undefined errors
 const AuthContext = createContext({
@@ -71,7 +71,8 @@ export function AuthProvider({ children }) {
     
     try {
       console.log('Fetching profile for user ID:', userId);
-      const { data, error } = await profileService.getCurrentProfile(userId);
+      // Using centralized apiService for profile fetching
+      const { data, error } = await apiService.getCurrentUserProfile();
       if (error) {
         console.error('Error fetching profile:', error);
         return;
@@ -90,7 +91,8 @@ export function AuthProvider({ children }) {
   const signIn = async (email, password) => {
     try {
       console.log('🔄 Starting login process...');
-      const { data, error, originalData } = await authService.login(email, password);
+      // Using centralized apiService for login
+      const { data, error, originalData } = await apiService.login(email, password);
       console.log('📦 Login response:', { data, error, originalData });
       
       if (error) {
@@ -173,31 +175,70 @@ export function AuthProvider({ children }) {
         role: 'EMPLOYEE' // Default role
       };
       
-      const { data, error, originalData } = await authService.register(registerData);
+      // Using centralized apiService for registration
+      const { data, error, originalData } = await apiService.register(registerData);
       if (error) {
         toast.error(error);
         throw error;
       }
       
+      console.log('Registration response:', data);
+      
       // Set user and profile if registration was successful
-      if (data.user) {
-        setUser(data.user);
-        setProfile(data.profile);
+      if (data) {
+        // Store token if available
+        if (data.token) {
+          localStorage.setItem(AUTH_TOKEN_NAME, data.token);
+        }
         
-        // Show success toast and redirect to dashboard
-        toast.success(originalData?.message || 'Registration successful');
-        window.location.href = '/dashboard';
+        // Create user object from response data
+        const userObj = {
+          id: data.userId,
+          userId: data.userId,
+          email: data.email,
+          role: data.role,
+          fullName: data.name || registerData.fullName
+        };
+        
+        console.log('✅ Registration successful, creating user object:', userObj);
+        setUser(userObj);
+        
+        // Store user data in localStorage for session persistence
+        console.log('💾 Storing user data in localStorage with ID:', userObj.id);
+        localStorage.setItem(USER_DATA_KEY, JSON.stringify(userObj));
+        
+        // Also store in user_info for compatibility
+        localStorage.setItem('user_info', JSON.stringify(userObj));
+        
+        // Fetch profile if we have a user ID
+        if (userObj.id) {
+          console.log('🔄 Fetching user profile for ID:', userObj.id);
+          await fetchProfile(userObj.id);
+        }
+        
+        // Show success toast
+        toast.success(originalData?.message || 'Registration successful!');
+        
+        // Use setTimeout to ensure toast is visible before redirect
+        console.log('🔄 Preparing to redirect to dashboard...');
+        setTimeout(() => {
+          console.log('🚀 Redirecting to dashboard now');
+          window.location.replace('/dashboard');
+        }, 1000);
       }
       
       return { data, error: null, originalData };
     } catch (error) {
+      console.error('Error signing up:', error);
+      toast.error('Failed to sign up. Please try again.');
       return { data: null, error };
     }
   };
 
   const signOut = async () => {
     try {
-      const { error, originalData } = await authService.logout();
+      // Using centralized apiService for logout
+      const { error, originalData } = await apiService.logout();
       
       if (error) {
         toast.error(error);

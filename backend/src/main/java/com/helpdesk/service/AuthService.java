@@ -62,8 +62,9 @@ public class AuthService {
         }
         
         // Create profile in our database with encrypted password
+        String userId = UUID.randomUUID().toString();
         Profile profile = Profile.builder()
-                .id(UUID.randomUUID().toString())
+                .id(userId)
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
@@ -92,10 +93,14 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse authenticate(AuthRequest request) {
         try {
-            // Authenticate with Spring Security
+            // First find the user by email to get their ID
+            Profile profile = profileRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + request.getEmail()));
+            
+            // Authenticate with Spring Security using the user ID
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
+                            profile.getId(), // Use ID instead of email
                             request.getPassword()
                     )
             );
@@ -103,9 +108,7 @@ public class AuthService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             
-            // Find profile in our database
-            Profile profile = profileRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            // No need to find the profile again since we already have it
             
             // Generate JWT token
             String jwtToken = jwtService.generateToken(userDetails);

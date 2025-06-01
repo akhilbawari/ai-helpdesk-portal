@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ticketService } from '../../services';
+import { apiService } from '../../services';
+import { toast } from 'react-toastify';
 
 export default function TicketList() {
   const { user, profile } = useAuth();
@@ -29,31 +30,38 @@ export default function TicketList() {
       if (profile?.role === 'ADMIN') {
         // Admin can see all tickets
         if (statusFilter !== 'all' && categoryFilter !== 'all') {
-          response = await ticketService.getTicketsByCategoryAndStatus(categoryFilter, statusFilter);
+          response = await apiService.getTicketsByCategoryAndStatus(categoryFilter, statusFilter);
         } else if (statusFilter !== 'all') {
-          response = await ticketService.getTicketsByStatus(statusFilter);
+          response = await apiService.getTicketsByStatus(statusFilter);
         } else if (categoryFilter !== 'all') {
-          response = await ticketService.getTicketsByCategory(categoryFilter);
+          response = await apiService.getTicketsByCategory(categoryFilter);
         } else {
-          response = await ticketService.getAllTickets();
+          response = await apiService.getAllTickets();
         }
       } else if (profile?.role === 'SUPPORT') {
         // Support can see tickets in their department
         if (statusFilter !== 'all') {
-          response = await ticketService.getTicketsByCategoryAndStatus(profile.department, statusFilter);
+          response = await apiService.getTicketsByCategoryAndStatus(profile.department, statusFilter);
         } else {
-          response = await ticketService.getTicketsByCategory(profile.department);
+          response = await apiService.getTicketsByCategory(profile.department);
         }
       } else {
         // Regular users can only see their own tickets
-        response = await ticketService.getTicketsByCreatedBy(user.id);
+        response = await apiService.getMyTickets();
       }
       
-      if (response.error) throw new Error(response.error);
+      if (response.error) {
+        if (response.status === 403) {
+          toast.error('You do not have permission to access these tickets');
+        } else {
+          throw new Error(response.error);
+        }
+      }
       setTickets(response.data || []);
     } catch (error) {
       console.error('Error fetching tickets:', error);
       setError('Failed to load tickets. Please try again later.');
+      toast.error('Failed to load tickets. Please try again later.');
     } finally {
       setLoading(false);
     }

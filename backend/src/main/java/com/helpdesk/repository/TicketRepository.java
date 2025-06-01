@@ -9,7 +9,7 @@ import java.util.List;
 
 @Repository
 public interface TicketRepository extends MongoRepository<Ticket, String> {
-    List<Ticket> findByCreatedBy(Profile createdBy);
+    List<Ticket> findByCreatedBy(Profile user);
     List<Ticket> findByAssignedTo(Profile assignedTo);
     List<Ticket> findByStatus(Ticket.Status status);
     List<Ticket> findByCategory(Profile.Department category);
