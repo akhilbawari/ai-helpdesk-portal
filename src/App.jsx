@@ -2,9 +2,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './index.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { ChakraProvider } from '@chakra-ui/react';
 
 // Context
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './components/notifications/NotificationProvider';
 
 // Layout Components
 import Header from './components/layout/Header';
@@ -19,7 +21,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import GoogleOAuthCallback from './pages/auth/GoogleOAuthCallback';
-import Dashboard from './pages/dashboard/Dashboard';
+import Dashboard from './components/dashboard/Dashboard';
 import Profile from './pages/profile/Profile';
 import Settings from './pages/settings/Settings';
 import Unauthorized from './pages/Unauthorized';
@@ -33,14 +35,21 @@ import TicketList from './pages/tickets/TicketList';
 import TicketDetail from './pages/tickets/TicketDetail';
 import CreateTicket from './pages/tickets/CreateTicket';
 
+// Knowledge Pages
+import KnowledgeList from './components/knowledge/KnowledgeList';
+import KnowledgeDetail from './components/knowledge/KnowledgeDetail';
+import KnowledgeForm from './components/knowledge/KnowledgeForm';
+
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
-          <main className="flex-grow">
+    <ChakraProvider>
+      <Router>
+        <AuthProvider>
+          <NotificationProvider>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+              <main className="flex-grow">
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
@@ -97,14 +106,38 @@ function App() {
                 </ProtectedRoute>
               } />
               
+              {/* Knowledge Base Routes */}
+              <Route path="/knowledge" element={
+                <ProtectedRoute>
+                  <KnowledgeList />
+                </ProtectedRoute>
+              } />
+              <Route path="/knowledge/new" element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'SUPPORT']}>
+                  <KnowledgeForm />
+                </ProtectedRoute>
+              } />
+              <Route path="/knowledge/edit/:id" element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'SUPPORT']}>
+                  <KnowledgeForm isEdit={true} />
+                </ProtectedRoute>
+              } />
+              <Route path="/knowledge/:id" element={
+                <ProtectedRoute>
+                  <KnowledgeDetail />
+                </ProtectedRoute>
+              } />
+
               {/* 404 Route */}
               <Route path="*" element={<div className="container mx-auto px-4 py-20 text-center"><h1>Page Not Found</h1></div>} />
             </Routes>
           </main>
           <Footer />
         </div>
-      </AuthProvider>
-    </Router>
+          </NotificationProvider>
+        </AuthProvider>
+      </Router>
+    </ChakraProvider>
   );
 }
 

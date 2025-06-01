@@ -1,12 +1,32 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import ticketService from '../../services/ticketService';
-import profileService from '../../services/profileService';
+import { apiService } from '../../services';
+import { FiAlertCircle, FiClock, FiCheckCircle, FiActivity, FiFilter, FiRefreshCw, 
+         FiSearch, FiArrowRight, FiPlusCircle, FiEye, FiMessageSquare, FiCalendar, 
+         FiUser, FiTag, FiBarChart2, FiTrendingUp, FiEdit, FiZap, FiBox,
+         FiPieChart, FiMonitor, FiShield, FiTool, FiUsers, FiBook } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, 
+         LinearScale, PointElement, LineElement, Title } from 'chart.js';
+import { Doughnut, Line } from 'react-chartjs-2';
+
+// Register ChartJS components
+ChartJS.register(
+  ArcElement, 
+  Tooltip, 
+  Legend, 
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title
+);
 
 export default function SupportDashboard({ user, profile }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({
     total: 0,
     open: 0,
@@ -16,6 +36,8 @@ export default function SupportDashboard({ user, profile }) {
   });
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [departments, setDepartments] = useState(['IT', 'HR', 'ADMIN']);
+  const [activeTab, setActiveTab] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -26,19 +48,25 @@ export default function SupportDashboard({ user, profile }) {
   const fetchSupportTickets = async () => {
     try {
       console.log('Fetching tickets for support staff');
+      setLoading(true);
       
       // Get the department from the profile if available
       const userDepartment = profile?.department || 'IT';
       
-      // Get all tickets first
-      let { data } = await ticketService.getAllTickets();
+      // Use the appropriate API based on department selection
+      let { data, error } = selectedDepartment !== 'all' ?
+        // Get tickets by category (SUPPORT role required)
+        await apiService.getTicketsByCategory(selectedDepartment) :
+        // Get tickets by category using user's department (SUPPORT role required)
+        await apiService.getTicketsByCategory(userDepartment);
       
-      // Filter by department if needed
-      if (selectedDepartment !== 'all' && Array.isArray(data)) {
-        data = data.filter(ticket => ticket.category === selectedDepartment);
-      } else if (Array.isArray(data)) {
-        // If the user has a department, only show tickets for that department
-        data = data.filter(ticket => ticket.category === userDepartment);
+      if (error) {
+        if (error.statusCode === 403) {
+          toast.error('You do not have permission to view these tickets');
+          setTickets([]);
+          return;
+        }
+        throw error;
       }
       
       // Sort by priority and created date
@@ -91,7 +119,7 @@ export default function SupportDashboard({ user, profile }) {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'resolved':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-green-100 text-green-800';
       case 'closed':
         return 'bg-gray-100 text-gray-800';
       default:
@@ -100,28 +128,81 @@ export default function SupportDashboard({ user, profile }) {
   };
 
   const getPriorityColor = (priority) => {
-    switch (priority.toLowerCase()) {
+    switch (priority?.toLowerCase()) {
       case 'high':
-        return 'bg-coral-100 text-coral-800';
+        return 'bg-red-100 text-red-800';
       case 'medium':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-yellow-100 text-yellow-800';
       case 'low':
-        return 'bg-beige-100 text-beige-800';
+        return 'bg-green-100 text-green-800';
       default:
-        return 'bg-beige-100 text-beige-800';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   if (loading) {
     return (
-      <div className="animate-pulse p-4">
-        <div className="h-8 bg-beige-200 rounded w-1/4 mb-6"></div>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-24 bg-beige-100 rounded-lg"></div>
+      <div className="p-6">
+        <motion.div 
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: [0.6, 0.8, 0.6] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          className="h-10 bg-gradient-to-r from-indigo-200 to-blue-100 rounded-full w-1/4 mb-6"
+        ></motion.div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <motion.div 
+              key={i} 
+              initial={{ opacity: 0.6 }}
+              animate={{ opacity: [0.6, 0.8, 0.6] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.1 }}
+              className="h-32 bg-gradient-to-r from-indigo-100 to-white rounded-xl shadow-sm"
+            ></motion.div>
           ))}
         </div>
-        <div className="h-64 bg-beige-100 rounded-lg"></div>
+        
+        <div className="mb-6">
+          <motion.div 
+            initial={{ opacity: 0.6 }}
+            animate={{ opacity: [0.6, 0.8, 0.6] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            className="bg-white rounded-xl shadow-sm overflow-hidden"
+          >
+            <div className="h-14 border-b border-indigo-50 px-6 bg-indigo-50/30"></div>
+            <div className="p-6 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0.6 }}
+                  animate={{ opacity: [0.6, 0.8, 0.6] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.1 }}
+                  className="h-12 bg-indigo-50 rounded-lg"
+                ></motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+        
+        <motion.div 
+          initial={{ opacity: 0.6 }}
+          animate={{ opacity: [0.6, 0.8, 0.6] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          className="bg-white rounded-xl shadow-sm overflow-hidden"
+        >
+          <div className="h-14 border-b border-indigo-50 px-6 bg-indigo-50/30"></div>
+          <div className="p-6 space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0.6 }}
+                animate={{ opacity: [0.6, 0.8, 0.6] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.1 }}
+                className="h-24 bg-indigo-50 rounded-lg"
+              ></motion.div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -160,119 +241,232 @@ export default function SupportDashboard({ user, profile }) {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-soft p-6 border border-beige-100">
-          <div className="flex items-center">
-            <div className="bg-beige-100 p-3 rounded-md">
-              <svg className="w-6 h-6 text-beige-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-navy-600">Total Tickets</h3>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm p-6 border border-blue-100 hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-navy-600 mb-1">Total Tickets</h3>
               <p className="text-2xl font-bold text-navy-900">{stats.total}</p>
+              {stats.total > 0 && (
+                <p className="text-xs text-navy-500 mt-1">Across all departments</p>
+              )}
+            </div>
+            <div className="bg-white p-3 rounded-lg shadow-sm">
+              <FiBox className="w-6 h-6 text-blue-500" />
             </div>
           </div>
-        </div>
+          <div className="mt-4 pt-3 border-t border-blue-200">
+            <button 
+              onClick={() => fetchSupportTickets()}
+              className="text-xs flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <FiRefreshCw className="w-3 h-3 mr-1" />
+              Refresh Data
+            </button>
+          </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg shadow-soft p-6 border border-beige-100">
-          <div className="flex items-center">
-            <div className="bg-green-100 p-3 rounded-md">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-navy-600">Open Tickets</h3>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm p-6 border border-green-100 hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-navy-600 mb-1">Open</h3>
               <p className="text-2xl font-bold text-navy-900">{stats.open}</p>
+              {stats.total > 0 && (
+                <p className="text-xs text-navy-500 mt-1">{Math.round((stats.open / stats.total) * 100)}% of total</p>
+              )}
+            </div>
+            <div className="bg-white p-3 rounded-lg shadow-sm">
+              <FiAlertCircle className="w-6 h-6 text-green-500" />
             </div>
           </div>
-        </div>
+          <div className="mt-4 h-2 bg-white rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-green-500 rounded-full" 
+              style={{ width: `${stats.total ? (stats.open / stats.total) * 100 : 0}%` }}
+            ></div>
+          </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg shadow-soft p-6 border border-beige-100">
-          <div className="flex items-center">
-            <div className="bg-blue-100 p-3 rounded-md">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-navy-600">In Progress</h3>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl shadow-sm p-6 border border-indigo-100 hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-navy-600 mb-1">In Progress</h3>
               <p className="text-2xl font-bold text-navy-900">{stats.inProgress}</p>
+              {stats.total > 0 && (
+                <p className="text-xs text-navy-500 mt-1">{Math.round((stats.inProgress / stats.total) * 100)}% of total</p>
+              )}
+            </div>
+            <div className="bg-white p-3 rounded-lg shadow-sm">
+              <FiActivity className="w-6 h-6 text-indigo-500" />
             </div>
           </div>
-        </div>
+          <div className="mt-4 h-2 bg-white rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-indigo-500 rounded-full" 
+              style={{ width: `${stats.total ? (stats.inProgress / stats.total) * 100 : 0}%` }}
+            ></div>
+          </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg shadow-soft p-6 border border-beige-100">
-          <div className="flex items-center">
-            <div className="bg-purple-100 p-3 rounded-md">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-navy-600">Resolved</h3>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm p-6 border border-purple-100 hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-navy-600 mb-1">Resolved</h3>
               <p className="text-2xl font-bold text-navy-900">{stats.resolved}</p>
+              {stats.total > 0 && (
+                <p className="text-xs text-navy-500 mt-1">{Math.round((stats.resolved / stats.total) * 100)}% of total</p>
+              )}
+            </div>
+            <div className="bg-white p-3 rounded-lg shadow-sm">
+              <FiCheckCircle className="w-6 h-6 text-purple-500" />
             </div>
           </div>
-        </div>
+          <div className="mt-4 h-2 bg-white rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-purple-500 rounded-full" 
+              style={{ width: `${stats.total ? (stats.resolved / stats.total) * 100 : 0}%` }}
+            ></div>
+          </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg shadow-soft p-6 border border-beige-100">
-          <div className="flex items-center">
-            <div className="bg-coral-100 p-3 rounded-md">
-              <svg className="w-6 h-6 text-coral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-sm font-medium text-navy-600">High Priority</h3>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+          className="bg-gradient-to-br from-coral-50 to-coral-100 rounded-xl shadow-sm p-6 border border-coral-100 hover:shadow-md transition-shadow duration-300"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-navy-600 mb-1">High Priority</h3>
               <p className="text-2xl font-bold text-navy-900">{stats.highPriority}</p>
+              {stats.total > 0 && (
+                <p className="text-xs text-navy-500 mt-1">{Math.round((stats.highPriority / stats.total) * 100)}% of total</p>
+              )}
+            </div>
+            <div className="bg-white p-3 rounded-lg shadow-sm">
+              <FiZap className="w-6 h-6 text-coral-500" />
             </div>
           </div>
-        </div>
+          <div className="mt-4 h-2 bg-white rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-coral-500 rounded-full" 
+              style={{ width: `${stats.total ? (stats.highPriority / stats.total) * 100 : 0}%` }}
+            ></div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Ticket Queue */}
-      <div className="bg-white rounded-lg shadow-soft border border-beige-100 overflow-hidden mb-8">
-        <div className="p-6 border-b border-beige-100 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-navy-900">Ticket Queue</h2>
-          <Link 
-            to="/knowledge-base" 
-            className="inline-flex items-center px-3 py-1 bg-beige-100 text-navy-700 rounded-md hover:bg-beige-200 transition-colors text-sm"
-          >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-            Knowledge Base
-          </Link>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="bg-white rounded-xl shadow-sm border border-indigo-50 overflow-hidden mb-8"
+      >
+        <div className="p-6 border-b border-indigo-50 bg-gradient-to-r from-indigo-50 to-white flex justify-between items-center">
+          <div className="flex items-center">
+            <FiMessageSquare className="w-5 h-5 text-indigo-500 mr-2" />
+            <h2 className="text-lg font-bold text-navy-900">Ticket Queue</h2>
+            <span className="ml-3 px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+              {tickets.length} tickets
+            </span>
+          </div>
+          
+          <div className="flex space-x-2">
+            <div className="relative mr-2">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiSearch className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search tickets..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-1 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 transition-all duration-200"
+              />
+            </div>
+            
+            <button
+              onClick={() => fetchSupportTickets()}
+              className="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition-colors text-sm"
+            >
+              <FiRefreshCw className={`w-3.5 h-3.5 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            
+            <Link 
+              to="/knowledge-base" 
+              className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors text-sm"
+            >
+              <FiBook className="w-3.5 h-3.5 mr-1" />
+              Knowledge Base
+            </Link>
+          </div>
         </div>
         
         {tickets.length === 0 ? (
-          <div className="p-6 text-center">
-            <svg className="w-12 h-12 text-beige-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <p className="text-navy-600">No tickets found for the selected department.</p>
+          <div className="p-10 text-center">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <FiInbox className="w-16 h-16 text-indigo-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-navy-800 mb-1">No tickets found</h3>
+              <p className="text-navy-600 mb-6">There are no tickets assigned to this department yet.</p>
+              <button
+                onClick={() => fetchSupportTickets()}
+                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+              >
+                <FiRefreshCw className="w-4 h-4 mr-2" />
+                Refresh Tickets
+              </button>
+            </motion.div>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-beige-50">
+              <thead className="bg-indigo-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">Priority</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">Created By</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">Department</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">Created</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-navy-600 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Title</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Priority</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Created</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Department</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-beige-100">
+              <tbody className="divide-y divide-indigo-100">
                 {Array.isArray(tickets) && tickets.map((ticket) => (
-                  <tr key={ticket.id} className="hover:bg-beige-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-navy-900">#{ticket.id.substring(0, 8)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-600">{ticket.title}</td>
+                  <motion.tr 
+                    key={ticket.id} 
+                    className="hover:bg-indigo-50 transition-colors duration-150"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-900">#{ticket.id.substring(0, 8)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-700">{ticket.title}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(ticket.status)}`}>
                         {ticket.status}
@@ -284,63 +478,106 @@ export default function SupportDashboard({ user, profile }) {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-600">
-                      {ticket.createdByName || 'Unknown'}
+                      {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'Unknown date'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-600">
                       {ticket.category}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-navy-600">
-                      {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'Unknown date'}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Link to={`/tickets/${ticket.id}`} className="text-beige-600 hover:text-beige-900 mr-3">View</Link>
-                      <Link to={`/tickets/${ticket.id}/edit`} className="text-navy-600 hover:text-navy-900">Respond</Link>
+                      <Link to={`/tickets/${ticket.id}`} className="text-blue-600 hover:text-blue-900 mr-3 inline-flex items-center">
+                        <FiEye className="w-3.5 h-3.5 mr-1" /> View
+                      </Link>
+                      <Link to={`/tickets/${ticket.id}/edit`} className="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
+                        <FiEdit className="w-3.5 h-3.5 mr-1" /> Edit
+                      </Link>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* AI Suggestions Panel */}
-      <div className="bg-white rounded-lg shadow-soft border border-beige-100 overflow-hidden">
-        <div className="p-6 border-b border-beige-100">
-          <h2 className="text-lg font-bold text-navy-900">AI Suggestions</h2>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+        className="bg-white rounded-xl shadow-sm border border-indigo-50 overflow-hidden"
+      >
+        <div className="p-6 border-b border-indigo-50 bg-gradient-to-r from-purple-50 to-white flex justify-between items-center">
+          <div className="flex items-center">
+            <FiZap className="w-5 h-5 text-purple-500 mr-2" />
+            <h2 className="text-lg font-bold text-navy-900">AI Insights</h2>
+          </div>
+          <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+            3 new insights
+          </span>
         </div>
-        <div className="p-6">
-          <div className="bg-beige-50 rounded-lg p-4 mb-4">
+        
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-indigo-100 shadow-sm hover:shadow-md transition-all duration-300"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div className="bg-white p-2 rounded-lg shadow-sm">
+                <FiPieChart className="w-5 h-5 text-blue-500" />
+              </div>
+              <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">New</span>
+            </div>
             <h3 className="font-medium text-navy-700 mb-2">Pattern Detection</h3>
-            <p className="text-navy-600 text-sm mb-3">
-              There has been a 30% increase in IT tickets related to VPN connectivity issues in the last 24 hours.
+            <p className="text-navy-600 text-sm mb-3 h-16">
+              30% increase in VPN connectivity issues in the last 24 hours.
             </p>
-            <button className="text-sm text-beige-600 hover:text-beige-800">
+            <button className="text-sm flex items-center text-indigo-600 hover:text-indigo-800 transition-colors">
               View Affected Tickets
+              <FiArrowRight className="ml-1 w-3 h-3" />
             </button>
-          </div>
+          </motion.div>
           
-          <div className="bg-beige-50 rounded-lg p-4 mb-4">
-            <h3 className="font-medium text-navy-700 mb-2">Knowledge Base Suggestion</h3>
-            <p className="text-navy-600 text-sm mb-3">
-              Consider adding a new knowledge base article about the recent email migration issues.
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-br from-green-50 to-teal-50 rounded-xl p-5 border border-green-100 shadow-sm hover:shadow-md transition-all duration-300"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div className="bg-white p-2 rounded-lg shadow-sm">
+                <FiBook className="w-5 h-5 text-green-500" />
+              </div>
+              <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Suggested</span>
+            </div>
+            <h3 className="font-medium text-navy-700 mb-2">Knowledge Base</h3>
+            <p className="text-navy-600 text-sm mb-3 h-16">
+              Consider adding a new article about email migration issues.
             </p>
-            <button className="text-sm text-beige-600 hover:text-beige-800">
+            <button className="text-sm flex items-center text-green-600 hover:text-green-800 transition-colors">
               Create Article
+              <FiArrowRight className="ml-1 w-3 h-3" />
             </button>
-          </div>
+          </motion.div>
           
-          <div className="bg-beige-50 rounded-lg p-4">
+          <motion.div 
+            whileHover={{ y: -5 }}
+            className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-100 shadow-sm hover:shadow-md transition-all duration-300"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div className="bg-white p-2 rounded-lg shadow-sm">
+                <FiMessageSquare className="w-5 h-5 text-amber-500" />
+              </div>
+              <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">5 New</span>
+            </div>
             <h3 className="font-medium text-navy-700 mb-2">Response Templates</h3>
-            <p className="text-navy-600 text-sm mb-3">
-              You have 5 new AI-generated response templates for common issues.
+            <p className="text-navy-600 text-sm mb-3 h-16">
+              AI-generated response templates for common support issues.
             </p>
-            <button className="text-sm text-beige-600 hover:text-beige-800">
+            <button className="text-sm flex items-center text-amber-600 hover:text-amber-800 transition-colors">
               Review Templates
+              <FiArrowRight className="ml-1 w-3 h-3" />
             </button>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

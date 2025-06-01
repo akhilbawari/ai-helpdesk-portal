@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ticketService, profileService, attachmentService, aiService } from '../../services';
+import { apiService } from '../../services';
+import { toast } from 'react-toastify';
 
 export default function CreateTicket() {
   const { user, profile } = useAuth();
@@ -21,30 +22,31 @@ export default function CreateTicket() {
   const [successMessage, setSuccessMessage] = useState('');
   
   const categories = [
-    'Hardware Issue',
-    'Software Issue',
-    'Network Problem',
-    'Account Access',
-    'Email Problem',
-    'Printer Issue',
-    'Data Recovery',
-    'Security Concern',
-    'Training Request',
-    'Other'
+    'IT',
+    'HR',
+    'ADMIN'
   ];
   
-  const priorities = ['Low', 'Medium', 'High', 'Critical'];
+  const priorities = ['HIGH', 'LOW', 'MEDIUM', 'CRITICAL'];
 
   useEffect(() => {
     // Fetch users for assignment dropdown (only if user is admin or support)
     const fetchUsers = async () => {
       if (profile?.role === 'ADMIN' || profile?.role === 'SUPPORT') {
         try {
-          const { data, error } = await profileService.getAllProfiles();
-          if (error) throw error;
-          setUsers(data || []);
+          const { data, error } = await apiService.getAllUsers();
+          if (error) {
+            if (error.status === 403) {
+              toast.error('You do not have permission to view users');
+            } else {
+              throw error;
+            }
+          } else {
+            setUsers(data || []);
+          }
         } catch (error) {
           console.error('Error fetching users:', error);
+          toast.error('Failed to load users');
         }
       }
     };
@@ -93,12 +95,14 @@ export default function CreateTicket() {
       let aiConfidenceScore = null;
       
       try {
-        const { data: aiRouting } = await aiService.routeTicket(
+        const { data: aiRouting, error: aiError } = await apiService.routeTicket(
           formData.title,
           formData.description
         );
         
-        if (aiRouting && aiRouting.category && aiRouting.confidenceScore > 0.7) {
+        if (aiError) {
+          console.error('AI routing error:', aiError);
+        } else if (aiRouting && aiRouting.category && aiRouting.confidenceScore > 0.7) {
           suggestedCategory = aiRouting.category;
           aiConfidenceScore = aiRouting.confidenceScore;
         }
@@ -117,13 +121,19 @@ export default function CreateTicket() {
         aiConfidenceScore: aiConfidenceScore
       };
       
-      const { data: ticket, error: ticketError } = await ticketService.createTicket(ticketData);
-      if (ticketError) throw ticketError;
+      const { data: ticket, error: ticketError } = await apiService.createTicket(ticketData);
+      if (ticketError) {
+        if (ticketError.status === 403) {
+          throw new Error('You do not have permission to create tickets');
+        } else {
+          throw ticketError;
+        }
+      }
       
       // Upload attachments if any
       if (formData.attachments.length > 0) {
         for (const file of formData.attachments) {
-          const { error: uploadError } = await attachmentService.uploadAttachment(ticket.id, file);
+          const { error: uploadError } = await apiService.uploadAttachment(ticket.id, file);
           if (uploadError) throw uploadError;
         }
       }

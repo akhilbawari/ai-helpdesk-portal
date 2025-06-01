@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
-import adminService from '../../services/adminService';
+import { apiService } from '../../services';
 
 export default function UserManagement() {
   const { user } = useAuth();
@@ -23,8 +23,17 @@ export default function UserManagement() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await adminService.getAllUsers();
-      setUsers(response.data || []);
+      const { data, error } = await apiService.getAllUsers();
+      
+      if (error) {
+        if (error.status === 403) {
+          toast.error('You do not have permission to view users');
+        } else {
+          throw new Error(error.message || 'Failed to load users');
+        }
+      } else {
+        setUsers(data || []);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
@@ -35,9 +44,18 @@ export default function UserManagement() {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await adminService.updateUserRole(userId, newRole);
-      toast.success('User role updated successfully');
-      fetchUsers(); // Refresh the list
+      const { error } = await apiService.updateUserRole(userId, newRole);
+      
+      if (error) {
+        if (error.status === 403) {
+          toast.error('You do not have permission to update user roles');
+        } else {
+          throw new Error(error.message || 'Failed to update user role');
+        }
+      } else {
+        toast.success('User role updated successfully');
+        fetchUsers(); // Refresh the list
+      }
     } catch (error) {
       console.error('Error updating user role:', error);
       toast.error('Failed to update user role');
@@ -73,20 +91,34 @@ export default function UserManagement() {
             throw new Error('No valid users found in the CSV file');
           }
           
-          const response = await adminService.bulkImportUsers(users);
+          const { data: response, error } = await apiService.importUsersFromCsv(users);
           
-          setImportStatus({
-            isImporting: false,
-            success: response.data.success,
-            message: response.data.message,
-            data: response.data.data
-          });
-          
-          if (response.data.success) {
-            toast.success(response.data.message);
-            fetchUsers(); // Refresh the list
+          if (error) {
+            if (error.status === 403) {
+              toast.error('You do not have permission to import users');
+              setImportStatus({
+                isImporting: false,
+                success: false,
+                message: 'Permission denied: You do not have access to import users',
+                data: null
+              });
+            } else {
+              throw new Error(error.message || 'Failed to import users');
+            }
           } else {
-            toast.error(response.data.message);
+            setImportStatus({
+              isImporting: false,
+              success: response.success,
+              message: response.message,
+              data: response.data
+            });
+            
+            if (response.success) {
+              toast.success(response.message);
+              fetchUsers(); // Refresh the list
+            } else {
+              toast.error(response.message);
+            }
           }
         } catch (error) {
           console.error('Error processing CSV:', error);
