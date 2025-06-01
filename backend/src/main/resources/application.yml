@@ -5,7 +5,7 @@ spring:
       - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
   data:
     mongodb:
-      uri: mongodb+srv://akhilbawari1708:aE2egjaJ9ayKTcCG@brucewane.ittmttw.mongodb.net/ai-help-desk-new
+      uri: ${MONGODB_URI}
       auto-index-creation: true
 
 server:
@@ -15,22 +15,22 @@ server:
 
 # Keeping only storage configuration for file uploads
 supabase:
-  url: http://sfsdf
-  key: fsdfsfdsf
+  url: ${SUPABASE_URL}
+  key: ${SUPABASE_KEY}
   storage:
     bucket: ai-help-desk
 
 gemini:
-  api-key: ${GEMINI_API_KEY:sdfsdfsdfs}
+  api-key: ${GEMINI_API_KEY}
 
 jwt:
-  secret: ${JWT_SECRET:x7Wz9L2qJm4vR8N1cBtFgTeYkQpSdX0uAhCnVmJoLwEsIbGzHyKrUaMdPfQeTwYz}
+  secret: ${JWT_SECRET}
   expiration: 86400000 # 24 hours in milliseconds
 
 oauth:
   google:
-    client-id: ${GOOGLE_CLIENT_ID:sdsfdfsdf}
-    client-secret: ${GOOGLE_CLIENT_SECRET:abcdefh}
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
     redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:3000/auth/google/callback}
 
 # Frontend configuration
