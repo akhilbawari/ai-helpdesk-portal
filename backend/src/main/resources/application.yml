@@ -1,0 +1,38 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  data:
+    mongodb:
+      uri: mongodb+srv://akhilbawari1708:aE2egjaJ9ayKTcCG@brucewane.ittmttw.mongodb.net/ai-help-desk-new
+      auto-index-creation: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Keeping only storage configuration for file uploads
+supabase:
+  url: http://sfsdf
+  key: fsdfsfdsf
+  storage:
+    bucket: ai-help-desk
+
+gemini:
+  api-key: ${GEMINI_API_KEY:sdfsdfsdfs}
+
+jwt:
+  secret: ${JWT_SECRET:x7Wz9L2qJm4vR8N1cBtFgTeYkQpSdX0uAhCnVmJoLwEsIbGzHyKrUaMdPfQeTwYz}
+  expiration: 86400000 # 24 hours in milliseconds
+
+oauth:
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:sdsfdfsdf}
+    client-secret: ${GOOGLE_CLIENT_SECRET:abcdefh}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:3000/auth/google/callback}
+
+# Frontend configuration
+frontend:
+  url: ${FRONTEND_URL:http://localhost:3000}

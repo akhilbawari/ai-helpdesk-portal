@@ -1,0 +1,129 @@
+package com.helpdesk.service;
+
+import com.helpdesk.model.Profile;
+import com.helpdesk.model.Ticket;
+import com.helpdesk.repository.ProfileRepository;
+import com.helpdesk.repository.TicketRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+@Service
+@RequiredArgsConstructor
+public class TicketService {
+    
+    private final TicketRepository ticketRepository;
+    private final ProfileRepository profileRepository;
+    
+    @Transactional(readOnly = true)
+    public List<Ticket> getAllTickets() {
+        return ticketRepository.findAll();
+    }
+    
+    @Transactional(readOnly = true)
+    public Ticket getTicketById(String id) {
+        return ticketRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Ticket not found with id: " + id));
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsByCreatedBy(String userId) {
+        Profile user = profileRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
+        return ticketRepository.findByCreatedBy(user);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsByAssignedTo(String userId) {
+        Profile user = profileRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
+        return ticketRepository.findByAssignedTo(user);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsByStatus(Ticket.Status status) {
+        return ticketRepository.findByStatus(status);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsByCategory(Profile.Department category) {
+        return ticketRepository.findByCategory(category);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsByPriority(Ticket.Priority priority) {
+        return ticketRepository.findByPriority(priority);
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Ticket> getTicketsByCategoryAndStatus(Profile.Department category, Ticket.Status status) {
+        return ticketRepository.findByCategoryAndStatus(category, status);
+    }
+    
+    @Transactional
+    public Ticket createTicket(Ticket ticket) {
+        return ticketRepository.save(ticket);
+    }
+    
+    @Transactional
+    public Ticket updateTicket(String id, Ticket ticketDetails) {
+        Ticket ticket = getTicketById(id);
+        
+        if (ticketDetails.getTitle() != null) {
+            ticket.setTitle(ticketDetails.getTitle());
+        }
+        
+        if (ticketDetails.getDescription() != null) {
+            ticket.setDescription(ticketDetails.getDescription());
+        }
+        
+        if (ticketDetails.getStatus() != null) {
+            ticket.setStatus(ticketDetails.getStatus());
+            
+            // If status is changed to RESOLVED, set the resolvedAt timestamp
+            if (ticketDetails.getStatus() == Ticket.Status.RESOLVED && ticket.getResolvedAt() == null) {
+                ticket.setResolvedAt(OffsetDateTime.now());
+            }
+        }
+        
+        if (ticketDetails.getPriority() != null) {
+            ticket.setPriority(ticketDetails.getPriority());
+        }
+        
+        if (ticketDetails.getCategory() != null) {
+            ticket.setCategory(ticketDetails.getCategory());
+        }
+        
+        if (ticketDetails.getAssignedTo() != null) {
+            ticket.setAssignedTo(ticketDetails.getAssignedTo());
+        }
+        
+        if (ticketDetails.getAiConfidenceScore() != null) {
+            ticket.setAiConfidenceScore(ticketDetails.getAiConfidenceScore());
+        }
+        
+        return ticketRepository.save(ticket);
+    }
+    
+    @Transactional
+    public Ticket assignTicket(String ticketId, String assigneeId) {
+        Ticket ticket = getTicketById(ticketId);
+        Profile assignee = profileRepository.findById(assigneeId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + assigneeId));
+        
+        ticket.setAssignedTo(assignee);
+        ticket.setStatus(Ticket.Status.IN_PROGRESS);
+        
+        return ticketRepository.save(ticket);
+    }
+    
+    @Transactional
+    public void deleteTicket(String id) {
+        Ticket ticket = getTicketById(id);
+        ticketRepository.delete(ticket);
+    }
+}

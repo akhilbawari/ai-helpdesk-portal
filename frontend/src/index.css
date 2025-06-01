@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+  --color-beige-500: #c2a883;
+  --color-navy-800: #26456c;
+  --color-coral-500: #ff4530;
+}
+
+@layer base {
+  html {
+    @apply font-body text-navy-950;
+  }
+  
+  body {
+    @apply bg-beige-50 m-0 min-h-screen;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-display font-medium;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+  
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200 inline-flex items-center justify-center;
+  }
+  
+  .btn-primary {
+    @apply btn bg-beige-500 text-white hover:bg-beige-600 shadow-soft;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-navy-800 text-white hover:bg-navy-900 shadow-soft;
+  }
+  
+  .btn-accent {
+    @apply btn bg-coral-500 text-white hover:bg-coral-600 shadow-soft;
+  }
+  
+  .btn-outline {
+    @apply btn border-2 border-beige-500 text-beige-700 hover:bg-beige-500 hover:text-white;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-soft p-6 border border-beige-100;
+  }
+  
+  .input {
+    @apply px-4 py-3 rounded-lg border border-beige-200 focus:outline-none focus:ring-2 focus:ring-beige-500 bg-white w-full;
+  }
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
